@@ -109,7 +109,7 @@ def main(args):
     print('Test accuracy:', score[1])
 
     # Save model to model directory
-    #model.save(os.environ['SM_MODEL_DIR'], save_format='tf')
+    model.save(os.environ['SM_MODEL_DIR'], save_format='tf')
     #tf.compat.v1.keras.experimental.export_saved_model(model, os.environ['SM_MODEL_DIR'])
 
 #%%

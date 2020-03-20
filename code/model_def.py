@@ -51,10 +51,6 @@ def get_model(learning_rate, weight_decay, optimizer, momentum):
         opt = RMSprop(lr=learning_rate, decay=weight_decay)
     else:
         opt = Adam(lr=learning_rate, decay=weight_decay)
-
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=opt,
-                  metrics=['accuracy'])
     
     return model
 
