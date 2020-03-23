@@ -3,15 +3,12 @@ from tensorflow.keras.layers import Activation, Conv2D, Dense, Dropout, Flatten,
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam, SGD, RMSprop
 
-HEIGHT = 32
-WIDTH = 32
-DEPTH = 3
 NUM_CLASSES = 10
 
-def get_model(learning_rate, weight_decay, optimizer, momentum):
+def get_custom_model(input_shape, learning_rate, weight_decay, optimizer, momentum):
 
     model = Sequential()
-    model.add(Conv2D(32, (3, 3), padding='same', input_shape=(HEIGHT, WIDTH, DEPTH)))
+    model.add(Conv2D(32, (3, 3), padding='same', input_shape=input_shape))
     model.add(BatchNormalization())
     model.add(Activation('relu'))
     model.add(Conv2D(32, (3, 3)))
@@ -37,9 +34,9 @@ def get_model(learning_rate, weight_decay, optimizer, momentum):
     model.add(Activation('relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.4))
-
+    
     model.add(Flatten())
-    model.add(Dense(512))
+    model.add(Dense(256))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
     model.add(Dense(NUM_CLASSES))

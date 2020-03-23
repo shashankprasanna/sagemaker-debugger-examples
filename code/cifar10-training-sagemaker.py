@@ -1,12 +1,9 @@
-#%%
-import warnings
-warnings.filterwarnings('ignore',category=FutureWarning)
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import Input, Dense, Flatten
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam, SGD
-from model_def import get_model
+from model_def import get_custom_model
 import argparse
 import os
 
@@ -64,28 +61,54 @@ def get_dataset(filenames, batch_size):
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return dataset
 
+def get_model(model_type, input_shape, learning_rate, weight_decay, optimizer, momentum):
+    input_tensor = Input(shape=input_shape)
+    if model_type == 'resnet':
+        base_model = keras.applications.resnet50.ResNet50(include_top=False,
+                                                          weights='imagenet',
+                                                          input_tensor=input_tensor,
+                                                          input_shape=input_shape,
+                                                          classes=None)
+        x = Flatten()(base_model.output)
+        predictions = Dense(NUM_CLASSES, activation='softmax')(x)
+        model = Model(inputs=base_model.input, outputs=predictions)
+
+    elif model_type == 'vgg':
+        base_model = keras.applications.vgg19.VGG19(include_top=False,
+                                                          weights=None,
+                                                          input_tensor=input_tensor,
+                                                          input_shape=input_shape,
+                                                          classes=None)
+        x = Flatten()(base_model.output)
+        predictions = Dense(NUM_CLASSES, activation='softmax')(x)
+        model = Model(inputs=base_model.input, outputs=predictions)
+
+    else:
+        model = get_custom_model(input_shape, learning_rate, weight_decay, optimizer, momentum)
+        
+    return model
 
 def main(args):
     # Hyper-parameters
-    epochs = args.epochs
-    lr = args.learning_rate
-    batch_size = args.batch_size
-    momentum = args.momentum
+    epochs       = args.epochs
+    lr           = args.learning_rate
+    batch_size   = args.batch_size
+    momentum     = args.momentum
     weight_decay = args.weight_decay
-    optimizer = args.optimizer
+    optimizer    = args.optimizer
+    model_type   = args.model_type
 
     # SageMaker options
-    training_dir = args.training
+    training_dir   = args.training
     validation_dir = args.validation
-    eval_dir = args.eval
+    eval_dir       = args.eval
 
     train_dataset = get_dataset(training_dir+'/train.tfrecords',  batch_size)
-    val_dataset = get_dataset(validation_dir+'/validation.tfrecords', batch_size)
-    eval_dataset = get_dataset(eval_dir+'/eval.tfrecords', batch_size)
+    val_dataset   = get_dataset(validation_dir+'/validation.tfrecords', batch_size)
+    eval_dataset  = get_dataset(eval_dir+'/eval.tfrecords', batch_size)
     
     input_shape = (HEIGHT, WIDTH, DEPTH)
-    model = get_model(lr, weight_decay, optimizer, momentum)
-
+    model = get_model(model_type, input_shape, lr, weight_decay, optimizer, momentum)
     
     # Optimizer
     if optimizer.lower() == 'sgd':
@@ -123,6 +146,7 @@ if __name__ == "__main__":
     parser.add_argument('--weight-decay',  type=float, default=2e-4)
     parser.add_argument('--momentum',      type=float, default='0.9')
     parser.add_argument('--optimizer',     type=str,   default='sgd')
+    parser.add_argument('--model-type',    type=str,   default='resnet')
 
     # SageMaker parameters
     parser.add_argument('--model_dir',        type=str)
